@@ -85,3 +85,37 @@ CREATE TABLE Movimiento (
     CONSTRAINT fk_movimiento_origen FOREIGN KEY (origen_potrero_id) REFERENCES Potrero(id),
     CONSTRAINT fk_movimiento_destino FOREIGN KEY (destino_potrero_id) REFERENCES Potrero(id)
 );
+
+CREATE TABLE IF NOT EXISTS pesaje (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  animal_id INT NOT NULL,
+  fecha DATE NOT NULL,
+  peso DECIMAL(6,2) NOT NULL,
+  observaciones VARCHAR(255),
+  FOREIGN KEY (animal_id) REFERENCES animal(id) ON DELETE CASCADE
+);
+ALTER TABLE animal 
+  ADD COLUMN origen VARCHAR(20) DEFAULT 'Compra',
+  ADD COLUMN madre_id INT NULL,
+  ADD COLUMN padre_id INT NULL;
+
+CREATE TABLE IF NOT EXISTS pesaje (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  animal_id INT NOT NULL,
+  fecha DATE NOT NULL,
+  peso DECIMAL(6,2) NOT NULL,
+  observaciones VARCHAR(255),
+  FOREIGN KEY (animal_id) REFERENCES animal(id) ON DELETE CASCADE
+);
+USE sistema_ganadero;
+
+ALTER TABLE animal 
+  ADD COLUMN especie VARCHAR(50) DEFAULT 'Bovino',
+  ADD COLUMN raza VARCHAR(50) DEFAULT '';
+
+
+
+ALTER TABLE animal MODIFY COLUMN estado VARCHAR(20) DEFAULT 'Activo';
+
+
+ALTER TABLE animal ADD UNIQUE (caravana);

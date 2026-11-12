@@ -5,6 +5,7 @@ import animalesRoutes from './src/routes/animalesRoutes.js';
 import potrerosRoutes from './src/routes/potrerosRoutes.js';
 import movimientosRoutes from './src/routes/movimientosRoutes.js';
 import vacunacionesRoutes from './src/routes/vacunacionesRoutes.js';
+import pesajesRoutes from './src/routes/pesajesRoutes.js';
 
 const app = express(); // <-- ACÁ SE CREA LA APP
 
@@ -18,6 +19,7 @@ app.use('/api/animales', animalesRoutes);
 app.use('/api/potreros', potrerosRoutes);
 app.use('/api/movimientos', movimientosRoutes);
 app.use('/api/vacunaciones', vacunacionesRoutes);
+app.use('/api/pesajes', pesajesRoutes);
 
 // Inicio del servidor
 app.listen(3000, () => console.log('Servidor Backend en puerto 3000'));

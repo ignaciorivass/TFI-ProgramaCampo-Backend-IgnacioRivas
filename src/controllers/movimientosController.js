@@ -14,6 +14,14 @@ export const getMovimientos = async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 };
 
+export const getMovimientoById = async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM movimiento WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ message: 'Movimiento no encontrado' });
+    res.json(rows[0]);
+  } catch (error) { res.status(500).json({ error: error.message }); }
+};
+
 export const createMovimiento = async (req, res) => {
   const { animal_id, fecha, tipo, origen_potrero_id, destino_potrero_id } = req.body;
   try {
@@ -25,11 +33,20 @@ export const createMovimiento = async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 };
 
+export const updateMovimiento = async (req, res) => {
+  const { animal_id, fecha, tipo, origen_potrero_id, destino_potrero_id } = req.body;
+  try {
+    await pool.query(
+      'UPDATE movimiento SET animal_id = ?, fecha = ?, tipo = ?, origen_potrero_id = ?, destino_potrero_id = ? WHERE id = ?',
+      [animal_id, fecha ? fecha.split('T')[0] : null, tipo, origen_potrero_id || null, destino_potrero_id || null, req.params.id]
+    );
+    res.json({ message: 'Movimiento actualizado' });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+};
+
 export const deleteMovimiento = async (req, res) => {
   try {
     await pool.query('DELETE FROM movimiento WHERE id = ?', [req.params.id]);
     res.json({ message: 'Movimiento eliminado correctamente' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  } catch (error) { res.status(500).json({ error: error.message }); }
 };
