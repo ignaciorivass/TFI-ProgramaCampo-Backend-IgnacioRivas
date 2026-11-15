@@ -1,8 +1,14 @@
-import { Router } from 'express';
-import { getAnimales, getAnimalById, createAnimal, updateAnimal, deleteAnimal } from '../controllers/animalesController.js';
+import express from 'express';
+import {
+  getAnimales,
+  getAnimalById,
+  createAnimal,
+  updateAnimal,
+  deleteAnimal,
+} from '../controllers/animalesController.js';
 import { verifyToken, verifyAdmin } from '../middlewares/auth.js';
 
-const router = Router();
+const router = express.Router();
 
 router.get('/', verifyToken, getAnimales);
 router.get('/:id', verifyToken, getAnimalById);

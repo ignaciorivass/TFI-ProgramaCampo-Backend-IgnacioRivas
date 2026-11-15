@@ -1,10 +1,10 @@
-import { Router } from 'express';
-import { getVacunaciones, getVacunacionById, getVacunas, createVacunacion, updateVacunacion, deleteVacunacion } from '../controllers/vacunacionesController.js';
+import express from 'express';
+import { getVacunaciones, getVacunas, getVacunacionById, createVacunacion, updateVacunacion, deleteVacunacion } from '../controllers/vacunacionesController.js';
 import { verifyToken, verifyAdmin } from '../middlewares/auth.js';
 
-const router = Router();
+const router = express.Router();
 
-router.get('/catalogo', verifyToken, getVacunas);
+router.get('/vacunas', verifyToken, getVacunas);
 router.get('/', verifyToken, getVacunaciones);
 router.get('/:id', verifyToken, getVacunacionById);
 router.post('/', verifyToken, createVacunacion);
