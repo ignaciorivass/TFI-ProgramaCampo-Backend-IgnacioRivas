@@ -10,6 +10,7 @@ import { verifyToken, verifyAdmin } from '../middlewares/auth.js';
 
 const router = express.Router();
 
+// Todas las operaciones requieren token; solo un administrador puede eliminar.
 router.get('/', verifyToken, getAnimales);
 router.get('/:id', verifyToken, getAnimalById);
 router.post('/', verifyToken, createAnimal);

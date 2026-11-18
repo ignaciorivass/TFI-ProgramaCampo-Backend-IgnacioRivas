@@ -1,5 +1,6 @@
 import pool from '../db.js';
 
+// Devuelve animales junto con el nombre del potrero; LEFT JOIN conserva animales sin potrero.
 export const getAnimales = async (req, res) => {
   try {
     const [rows] = await pool.query(`
@@ -15,6 +16,7 @@ export const getAnimales = async (req, res) => {
   }
 };
 
+// Busca por la clave primaria y responde 404 cuando no existe ese animal.
 export const getAnimalById = async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM animal WHERE id = ?', [req.params.id]);
@@ -28,6 +30,7 @@ export const getAnimalById = async (req, res) => {
   }
 };
 
+// Crea un animal; algunos campos opcionales reciben valores iniciales o NULL.
 export const createAnimal = async (req, res) => {
   const {
     caravana,
@@ -44,6 +47,7 @@ export const createAnimal = async (req, res) => {
   } = req.body;
 
   try {
+    // Los placeholders ? mantienen los valores del cuerpo fuera del texto SQL.
     const [result] = await pool.query(
       `INSERT INTO animal 
         (caravana, especie, raza, sexo, origen, fecha_nacimiento, potrero_id, peso, estado, madre_id, padre_id)
@@ -69,6 +73,7 @@ export const createAnimal = async (req, res) => {
   }
 };
 
+// Reemplaza los datos editables del animal indicado por el parametro :id.
 export const updateAnimal = async (req, res) => {
   const {
     caravana,
@@ -113,6 +118,7 @@ export const updateAnimal = async (req, res) => {
   }
 };
 
+// Las claves foraneas pueden impedir borrar animales que aun tienen historial asociado.
 export const deleteAnimal = async (req, res) => {
   try {
     await pool.query('DELETE FROM animal WHERE id = ?', [req.params.id]);

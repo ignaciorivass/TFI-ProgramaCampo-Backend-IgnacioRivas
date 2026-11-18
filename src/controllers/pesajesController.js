@@ -1,5 +1,6 @@
 import pool from '../db.js';
 
+// Lista pesajes con la caravana del animal para facilitar su identificacion.
 export const getPesajes = async (req, res) => {
   try {
     const [rows] = await pool.query(`
@@ -12,6 +13,7 @@ export const getPesajes = async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 };
 
+// Devuelve un registro individual o 404 si no existe.
 export const getPesajeById = async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM pesaje WHERE id = ?', [req.params.id]);
@@ -20,6 +22,7 @@ export const getPesajeById = async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 };
 
+// Guarda el pesaje historico y actualiza el peso actual del animal.
 export const createPesaje = async (req, res) => {
   const { animal_id, fecha, peso, observaciones } = req.body;
   try {
@@ -32,6 +35,7 @@ export const createPesaje = async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 };
 
+// Modifica el historial y sincroniza el peso actual con el valor recibido.
 export const updatePesaje = async (req, res) => {
   const { animal_id, fecha, peso, observaciones } = req.body;
   try {
@@ -44,6 +48,7 @@ export const updatePesaje = async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 };
 
+// Elimina solo el registro historico del pesaje.
 export const deletePesaje = async (req, res) => {
   try {
     await pool.query('DELETE FROM pesaje WHERE id = ?', [req.params.id]);

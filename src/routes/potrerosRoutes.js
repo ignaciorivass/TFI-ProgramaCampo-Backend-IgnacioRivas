@@ -4,6 +4,7 @@ import { verifyToken, verifyAdmin } from '../middlewares/auth.js';
 
 const router = Router();
 
+// El router aplica autenticacion a todas las operaciones y rol administrador al borrado.
 router.get('/', verifyToken, getPotreros);
 router.get('/:id', verifyToken, getPotreroById);
 router.post('/', verifyToken, createPotrero);

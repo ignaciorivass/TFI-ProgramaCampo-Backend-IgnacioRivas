@@ -72,8 +72,12 @@ El servidor quedará escuchando en:
 ## 🌐 Endpoints de la API REST
 
 ### 🔑 Autenticación (`/api/auth`)
-* `POST /api/auth/register` - Registro de nuevos usuarios (Administrador / Peón).
+* `POST /api/auth/register` - Registro público de una cuenta Peón.
 * `POST /api/auth/login` - Inicio de sesión y entrega de token JWT.
+
+### 👥 Usuarios (`/api/usuarios`)
+* `GET /api/usuarios` - Listar usuarios sin exponer contraseñas (Requiere Token + Rol Administrador).
+* `DELETE /api/usuarios/:id` - Eliminar un usuario (Requiere Token + Rol Administrador; no permite eliminar la cuenta propia ni al último administrador).
 
 ### 🐂 Animales (`/api/animales`)
 * `GET /api/animales` - Obtener listado de animales (Requiere Token).
@@ -101,3 +105,27 @@ El servidor quedará escuchando en:
 El backend implementa dos middlewares de control:
 1. **`verifyToken`**: Verifica la validez del token JWT en el encabezado `Authorization: Bearer <token>`.
 2. **`verifyAdmin`**: Intercepta la petición y verifica que `req.user.rol === 'Administrador'`, bloqueando cualquier intento de borrado o modificación sensible por parte de usuarios no autorizados.
+
+El registro público siempre asigna el rol **Peón**; la asignación de privilegios de administrador no se acepta desde ese formulario.
+
+## 📊 Métricas y fotos de animales (novedades)
+
+**Dependencia nueva:** `multer` (subida de archivos). Ejecutar `npm install` después de actualizar.
+
+**Base de datos:** el animal ahora tiene la columna `foto`. Si ya tenés la base creada, ejecutá `migracion_foto.sql`; si empezás de cero, `schema.sql` ya la incluye.
+
+**Endpoints nuevos (todos requieren token JWT):**
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/api/metricas/resumen` | KPIs del dashboard (el administrador recibe además usuarios y ventas/bajas) |
+| GET | `/api/metricas/nacimientos-por-mes` | Nacimientos de los últimos 6 meses |
+| GET | `/api/metricas/animales-por-potrero` | Animales activos por potrero |
+| GET | `/api/metricas/animales-por-raza` | Rodeo activo por raza |
+| GET | `/api/metricas/vacunaciones-por-vacuna` | Aplicaciones por enfermedad |
+| GET | `/api/metricas/ultimos-animales` | Últimos 5 animales registrados |
+| POST | `/api/animales/:id/foto` | Sube la foto (campo `foto`, JPG/PNG/WEBP, máx. 2 MB) |
+
+Las fotos se guardan en `Backend/uploads/animales` (carpeta ignorada por git) y se sirven en `/uploads/animales/<archivo>`.
+
+**Usuario administrador inicial:** ejecutar `npm run seed` crea (o resetea) `admin@campo.com` / `Admin123`.

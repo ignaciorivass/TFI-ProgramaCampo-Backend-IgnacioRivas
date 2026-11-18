@@ -4,6 +4,7 @@ import { verifyToken, verifyAdmin } from '../middlewares/auth.js';
 
 const router = Router();
 
+// Todas las operaciones requieren sesion valida; solo administradores pueden borrar pesajes.
 router.get('/', verifyToken, getPesajes);
 router.get('/:id', verifyToken, getPesajeById);
 router.post('/', verifyToken, createPesaje);

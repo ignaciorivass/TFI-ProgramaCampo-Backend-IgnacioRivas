@@ -1,6 +1,6 @@
 import pool from '../db.js';
 
-// Actualiza el estado y potrero del animal según el movimiento
+// Mantiene el estado actual del animal alineado con el tipo de movimiento registrado.
 const sincronizarAnimal = async (animalId, tipo, destinoPotreroId) => {
   if (tipo === 'Traslado') {
     await pool.query(
@@ -20,6 +20,7 @@ const sincronizarAnimal = async (animalId, tipo, destinoPotreroId) => {
   }
 };
 
+// Lista movimientos con datos relacionados del animal y potreros de origen/destino.
 export const getMovimientos = async (req, res) => {
   try {
     const [rows] = await pool.query(`
@@ -40,6 +41,7 @@ export const getMovimientos = async (req, res) => {
   }
 };
 
+// Obtiene un movimiento individual usando su id.
 export const getMovimientoById = async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM movimiento WHERE id = ?', [req.params.id]);
@@ -52,16 +54,19 @@ export const getMovimientoById = async (req, res) => {
   }
 };
 
+// Registra el movimiento y luego actualiza el estado/potrero actual del animal.
 export const createMovimiento = async (req, res) => {
   const { animal_id, fecha, tipo, motivo, origen_potrero_id, destino_potrero_id } = req.body;
 
   try {
     let origenFinal = origen_potrero_id || null;
     if (!origenFinal) {
+      // Si no se informo el origen, se toma el potrero que el animal tiene actualmente.
       const [animal] = await pool.query('SELECT potrero_id FROM animal WHERE id = ?', [animal_id]);
       origenFinal = animal[0]?.potrero_id || null;
     }
 
+    // Solo los traslados tienen potrero de destino.
     const destinoFinal = tipo === 'Traslado' ? destino_potrero_id || null : null;
 
     const [result] = await pool.query(
@@ -78,6 +83,7 @@ export const createMovimiento = async (req, res) => {
   }
 };
 
+// Edita el registro y vuelve a sincronizar el animal con los datos recibidos.
 export const updateMovimiento = async (req, res) => {
   const { animal_id, fecha, tipo, motivo, origen_potrero_id, destino_potrero_id } = req.body;
   const destinoFinal = tipo === 'Traslado' ? destino_potrero_id || null : null;
@@ -98,6 +104,7 @@ export const updateMovimiento = async (req, res) => {
   }
 };
 
+// Antes de borrar el historial, devuelve el animal al potrero de origen registrado.
 export const deleteMovimiento = async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM movimiento WHERE id = ?', [req.params.id]);

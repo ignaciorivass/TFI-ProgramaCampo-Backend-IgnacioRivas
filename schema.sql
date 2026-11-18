@@ -1,113 +1,167 @@
 -- ============================================================================
--- BASE DE DATOS COMPLETA - SISTEMA GANADERO (TFI PCampo)
+-- ESQUEMA ACTUAL - SISTEMA GANADERO (TFI PCampo)
+-- ============================================================================
+-- Este archivo es seguro para ejecutar sobre una base ya creada:
+-- no elimina la base, las tablas ni los datos existentes.
+--
+-- Uso:
+--   mysql -u root -p < schema.sql
 -- ============================================================================
 
-DROP DATABASE IF EXISTS sistema_ganadero;
-CREATE DATABASE sistema_ganadero CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS sistema_ganadero
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
 USE sistema_ganadero;
 
--- 1. Tabla de Usuarios y Roles
-CREATE TABLE usuario (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    email VARCHAR(150) UNIQUE NOT NULL,
-    contraseña VARCHAR(255) NOT NULL,
-    rol ENUM('Administrador', 'Peón', 'Veterinario') NOT NULL DEFAULT 'Peón'
-);
+-- 1. Usuarios
+CREATE TABLE IF NOT EXISTS usuario (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(100) NOT NULL,
+  email VARCHAR(150) NOT NULL,
+  contraseña VARCHAR(255) NOT NULL,
+  rol VARCHAR(20) NOT NULL DEFAULT 'Peón',
+  UNIQUE KEY uq_usuario_email (email)
+) ENGINE=InnoDB;
 
--- 2. Tabla de Potreros
-CREATE TABLE potrero (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    superficie DECIMAL(10,2) NOT NULL,
-    capacidad INT NOT NULL
-);
+-- 2. Potreros
+CREATE TABLE IF NOT EXISTS potrero (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(100) NOT NULL,
+  superficie DECIMAL(10,2) NOT NULL,
+  capacidad INT NOT NULL
+) ENGINE=InnoDB;
 
--- 3. Tabla Principal de Animales (con origen y relación reflexiva madre/padre)
-CREATE TABLE animal (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    caravana VARCHAR(50) UNIQUE NOT NULL,
-    especie VARCHAR(50) NOT NULL DEFAULT 'Bovino',
-    raza VARCHAR(50) NOT NULL DEFAULT '',
-    sexo ENUM('Macho', 'Hembra') NOT NULL,
-    fecha_nacimiento DATE NOT NULL,
-    peso DECIMAL(8,2) NOT NULL,
-    origen VARCHAR(20) NOT NULL DEFAULT 'Compra',
-    estado VARCHAR(20) NOT NULL DEFAULT 'Activo',
-    observaciones TEXT NULL,
-    potrero_id INT NULL,
-    madre_id INT NULL,
-    padre_id INT NULL,
-    CONSTRAINT fk_animal_potrero FOREIGN KEY (potrero_id) REFERENCES potrero(id) ON DELETE SET NULL,
-    CONSTRAINT fk_animal_madre FOREIGN KEY (madre_id) REFERENCES animal(id) ON DELETE SET NULL,
-    CONSTRAINT fk_animal_padre FOREIGN KEY (padre_id) REFERENCES animal(id) ON DELETE SET NULL
-);
+-- 3. Animales
+-- especie y raza se almacenan directamente porque el frontend las administra
+-- como campos independientes.
+CREATE TABLE IF NOT EXISTS animal (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  caravana VARCHAR(50) NOT NULL,
+  especie VARCHAR(50) NOT NULL DEFAULT 'Bovino',
+  raza VARCHAR(50) NOT NULL DEFAULT '',
+  sexo ENUM('Macho', 'Hembra') NOT NULL,
+  fecha_nacimiento DATE NOT NULL,
+  peso DECIMAL(8,2) NOT NULL,
+  origen VARCHAR(20) NOT NULL DEFAULT 'Compra',
+  estado VARCHAR(20) NOT NULL DEFAULT 'Activo',
+  potrero_id INT NULL,
+  madre_id INT NULL,
+  padre_id INT NULL,
+  UNIQUE KEY uq_animal_caravana (caravana),
+  CONSTRAINT fk_animal_potrero
+    FOREIGN KEY (potrero_id) REFERENCES potrero(id) ON DELETE SET NULL,
+  CONSTRAINT fk_animal_madre
+    FOREIGN KEY (madre_id) REFERENCES animal(id) ON DELETE SET NULL,
+  CONSTRAINT fk_animal_padre
+    FOREIGN KEY (padre_id) REFERENCES animal(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
 
--- 4. Catálogo de Vacunas
-CREATE TABLE vacuna (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    enfermedad VARCHAR(100) NULL
-);
+-- 4. Catálogo de vacunas
+CREATE TABLE IF NOT EXISTS vacuna (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(100) NOT NULL,
+  enfermedad VARCHAR(100) NULL
+) ENGINE=InnoDB;
 
--- 5. Historial Sanitario (Vacunaciones aplicadas)
-CREATE TABLE vacunacion (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    animal_id INT NOT NULL,
-    vacuna_id INT NOT NULL,
-    fecha_aplicacion DATE NOT NULL,
-    dosis VARCHAR(50) NOT NULL,
-    CONSTRAINT fk_vacunacion_animal FOREIGN KEY (animal_id) REFERENCES animal(id),
-    CONSTRAINT fk_vacunacion_vacuna FOREIGN KEY (vacuna_id) REFERENCES vacuna(id)
-);
+-- 5. Aplicaciones de vacunas
+-- La dosis se conserva como texto normalizado (ej.: "2 ml", "5 cc", "1 dosis").
+CREATE TABLE IF NOT EXISTS vacunacion (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  animal_id INT NOT NULL,
+  vacuna_id INT NOT NULL,
+  fecha_aplicacion DATE NOT NULL,
+  dosis VARCHAR(50) NOT NULL,
+  CONSTRAINT fk_vacunacion_animal
+    FOREIGN KEY (animal_id) REFERENCES animal(id),
+  CONSTRAINT fk_vacunacion_vacuna
+    FOREIGN KEY (vacuna_id) REFERENCES vacuna(id)
+) ENGINE=InnoDB;
 
--- 6. Historial de Movimientos (Traslados, Ventas y Bajas)
-CREATE TABLE movimiento (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    animal_id INT NOT NULL,
-    fecha DATE NOT NULL,
-    tipo ENUM('Traslado', 'Venta', 'Baja') NOT NULL,
-    motivo VARCHAR(255) NULL,
-    origen_potrero_id INT NULL,
-    destino_potrero_id INT NULL,
-    motivo VARCHAR(255) NULL,
-    CONSTRAINT fk_movimiento_animal FOREIGN KEY (animal_id) REFERENCES animal(id),
-    CONSTRAINT fk_movimiento_origen FOREIGN KEY (origen_potrero_id) REFERENCES potrero(id) ON DELETE SET NULL,
-    CONSTRAINT fk_movimiento_destino FOREIGN KEY (destino_potrero_id) REFERENCES potrero(id) ON DELETE SET NULL
-);
+-- 6. Movimientos
+CREATE TABLE IF NOT EXISTS movimiento (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  animal_id INT NOT NULL,
+  fecha DATE NOT NULL,
+  tipo ENUM('Traslado', 'Venta', 'Baja') NOT NULL,
+  motivo VARCHAR(255) NULL,
+  origen_potrero_id INT NULL,
+  destino_potrero_id INT NULL,
+  CONSTRAINT fk_movimiento_animal
+    FOREIGN KEY (animal_id) REFERENCES animal(id),
+  CONSTRAINT fk_movimiento_origen
+    FOREIGN KEY (origen_potrero_id) REFERENCES potrero(id) ON DELETE SET NULL,
+  CONSTRAINT fk_movimiento_destino
+    FOREIGN KEY (destino_potrero_id) REFERENCES potrero(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
 
--- 7. Historial de Pesajes
-CREATE TABLE pesaje (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    animal_id INT NOT NULL,
-    fecha DATE NOT NULL,
-    peso DECIMAL(6,2) NOT NULL,
-    observaciones VARCHAR(255) NULL,
-    CONSTRAINT fk_pesaje_animal FOREIGN KEY (animal_id) REFERENCES animal(id) ON DELETE CASCADE
-);
+-- 7. Pesajes
+CREATE TABLE IF NOT EXISTS pesaje (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  animal_id INT NOT NULL,
+  fecha DATE NOT NULL,
+  peso DECIMAL(6,2) NOT NULL,
+  observaciones VARCHAR(255) NULL,
+  CONSTRAINT fk_pesaje_animal
+    FOREIGN KEY (animal_id) REFERENCES animal(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
 
 -- ============================================================================
--- DATOS INICIALES DE PRUEBA (Para que el sistema arranque listo para usar)
+-- DATOS INICIALES NO DESTRUCTIVOS
+-- Solo se agregan si no existen, sin actualizar ni borrar registros cargados.
 -- ============================================================================
 
-INSERT INTO potrero (nombre, superficie, capacidad) VALUES
-('Potrero Norte 1', 45.50, 80),
-('Potrero Sur 2', 30.00, 50),
-('Corral de Engorde', 10.00, 35);
+INSERT IGNORE INTO vacuna (id, nombre, enfermedad) VALUES
+  (1, 'Fiebre Aftosa - Biogénesis Bagó', 'Fiebre Aftosa'),
+  (2, 'Brucelosis Cepa 19', 'Brucelosis Bovina'),
+  (3, 'Carbunclo Bacteridiano', 'Carbunclo'),
+  (4, 'Clostridiosis Polivalente', 'Mancha y Gangrena'),
+  (5, 'Ivermectina Antiparasitaria', 'Parásitos internos y externos');
 
-INSERT INTO vacuna (nombre, enfermedad) VALUES
-('Fiebre Aftosa - Biogénesis Bagó', 'Fiebre Aftosa'),
-('Brucelosis Cepa 19', 'Brucelosis Bovina'),
-('Carbunclo Bacteridiano', 'Carbunclo'),
-('Clostridiosis Polivalente', 'Mancha y Gangrena'),
-('Ivermectina Antiparasitaria', 'Parásitos internos y externos');
+-- ============================================================================
+-- MIGRACIÓN COMPATIBLE DE UNA INSTALACIÓN EXISTENTE
+-- ============================================================================
+-- Copia los datos de la estructura anterior antes de quitar su columna duplicada.
+-- Las fechas vacías conservan el valor de fecha_aplicacion.
 
-INSERT INTO animal (caravana, especie, raza, sexo, fecha_nacimiento, peso, origen, estado, potrero_id, madre_id, padre_id) VALUES
-('AR-101', 'Bovino', 'Brangus', 'Hembra', '2023-05-10', 420.50, 'Compra', 'Activo', 1, NULL, NULL),
-('AR-201', 'Bovino', 'Aberdeen Angus', 'Macho', '2022-08-15', 580.00, 'Compra', 'Activo', 1, NULL, NULL),
-('AR-301', 'Bovino', 'Brangus', 'Macho', '2026-09-20', 95.00, 'Nacimiento', 'Activo', 2, 1, 2);
+SET @tiene_fecha_vacunacion = (
+  SELECT COUNT(*)
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = 'sistema_ganadero'
+    AND TABLE_NAME = 'vacunacion'
+    AND COLUMN_NAME = 'fecha'
+);
 
-INSERT INTO pesaje (animal_id, fecha, peso, observaciones) VALUES
-(1, '2026-10-01', 410.00, 'Control sanitario primavera'),
-(1, '2026-11-01', 420.50, 'Buena ganancia de peso'),
-(3, '2026-11-01', 95.00, 'Control post-nacimiento');
+SET @tiene_fecha_aplicacion = (
+  SELECT COUNT(*)
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = 'sistema_ganadero'
+    AND TABLE_NAME = 'vacunacion'
+    AND COLUMN_NAME = 'fecha_aplicacion'
+);
+
+SET @sql = IF(
+  @tiene_fecha_vacunacion > 0 AND @tiene_fecha_aplicacion > 0,
+  'UPDATE vacunacion SET fecha_aplicacion = COALESCE(fecha_aplicacion, fecha) WHERE fecha_aplicacion IS NULL',
+  'SELECT 1'
+);
+PREPARE sentencia FROM @sql;
+EXECUTE sentencia;
+DEALLOCATE PREPARE sentencia;
+
+SET @sql = IF(
+  @tiene_fecha_vacunacion > 0,
+  'ALTER TABLE vacunacion DROP COLUMN fecha',
+  'SELECT 1'
+);
+PREPARE sentencia FROM @sql;
+EXECUTE sentencia;
+DEALLOCATE PREPARE sentencia;
+
+-- Convierte la dosis anterior DECIMAL o la deja como texto si ya es VARCHAR.
+ALTER TABLE vacunacion
+  MODIFY COLUMN dosis VARCHAR(50) NOT NULL;
+
+-- Roles admitidos por el sistema actual.
+ALTER TABLE usuario
+  MODIFY COLUMN rol VARCHAR(20) NOT NULL DEFAULT 'Peón';

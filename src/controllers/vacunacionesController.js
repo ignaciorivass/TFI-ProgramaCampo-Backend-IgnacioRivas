@@ -1,6 +1,8 @@
 import pool from '../db.js';
 
+// Asegura que exista el catalogo y adapta las consultas a ambos nombres de columna de fecha.
 const asegurarEstructura = async () => {
+  // Permite que la API funcione tambien si la tabla vacuna aun no fue creada.
   await pool.query(`
     CREATE TABLE IF NOT EXISTS vacuna (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -11,6 +13,7 @@ const asegurarEstructura = async () => {
 
   const [rowsVac] = await pool.query('SELECT COUNT(*) AS total FROM vacuna');
   if (rowsVac[0].total === 0) {
+    // Carga el catalogo inicial solo cuando esta vacio, sin duplicar registros existentes.
     await pool.query(`
       INSERT INTO vacuna (id, nombre, enfermedad) VALUES
       (1, 'Fiebre Aftosa - Biogénesis Bagó', 'Fiebre Aftosa'),
@@ -23,11 +26,13 @@ const asegurarEstructura = async () => {
 
   const [cols] = await pool.query('SHOW COLUMNS FROM vacunacion');
   const nombresCols = cols.map((c) => c.Field);
+  // Compatibilidad con esquemas que llaman "fecha" al campo de aplicacion.
   const colFecha = nombresCols.includes('fecha_aplicacion') ? 'fecha_aplicacion' : 'fecha';
 
   return { colFecha };
 };
 
+// Devuelve las opciones disponibles del catalogo de vacunas.
 export const getVacunas = async (req, res) => {
   try {
     await asegurarEstructura();
@@ -39,6 +44,7 @@ export const getVacunas = async (req, res) => {
   }
 };
 
+// Une la aplicacion con el animal y la vacuna para devolver informacion legible.
 export const getVacunaciones = async (req, res) => {
   try {
     const { colFecha } = await asegurarEstructura();
@@ -64,6 +70,7 @@ export const getVacunaciones = async (req, res) => {
   }
 };
 
+// Consulta una aplicacion individual para poder mostrarla o editarla.
 export const getVacunacionById = async (req, res) => {
   try {
     const { colFecha } = await asegurarEstructura();
@@ -81,6 +88,7 @@ export const getVacunacionById = async (req, res) => {
   }
 };
 
+// Registra la vacuna aplicada a un animal, convirtiendo los ids recibidos a numeros.
 export const createVacunacion = async (req, res) => {
   const { animal_id, vacuna_id, fecha_aplicacion, dosis } = req.body;
 
@@ -97,6 +105,7 @@ export const createVacunacion = async (req, res) => {
   }
 };
 
+// Actualiza los datos de la aplicacion existente.
 export const updateVacunacion = async (req, res) => {
   const { animal_id, vacuna_id, fecha_aplicacion, dosis } = req.body;
 
@@ -113,6 +122,7 @@ export const updateVacunacion = async (req, res) => {
   }
 };
 
+// Elimina el registro de aplicacion, no el animal ni la vacuna del catalogo.
 export const deleteVacunacion = async (req, res) => {
   try {
     await pool.query('DELETE FROM vacunacion WHERE id = ?', [req.params.id]);

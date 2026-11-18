@@ -6,10 +6,8 @@ import { login, register } from '../controllers/authController.js';
 
 const router = Router();
 
-// Ruta para iniciar sesion con email y password.
+// Estas rutas son publicas: se usan para obtener acceso o crear una cuenta.
 router.post('/login', login);
-
-// Ruta para registrar un nuevo usuario.
 router.post('/register', register); // Nueva ruta habilitada
 
 export default router;

@@ -1,5 +1,6 @@
 import pool from '../db.js';
 
+// Operaciones de consulta y mantenimiento del catalogo de potreros.
 export const getPotreros = async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM potrero');
@@ -7,6 +8,7 @@ export const getPotreros = async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 };
 
+// Busca un potrero por id; el parametro viene de la URL.
 export const getPotreroById = async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM potrero WHERE id = ?', [req.params.id]);
@@ -15,6 +17,7 @@ export const getPotreroById = async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 };
 
+// Crea un potrero a partir de los datos enviados en el cuerpo de la peticion.
 export const createPotrero = async (req, res) => {
   const { nombre, superficie, capacidad } = req.body;
   try {
@@ -23,6 +26,7 @@ export const createPotrero = async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 };
 
+// Actualiza nombre, superficie y capacidad del potrero indicado.
 export const updatePotrero = async (req, res) => {
   const { nombre, superficie, capacidad } = req.body;
   try {
@@ -31,6 +35,7 @@ export const updatePotrero = async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 };
 
+// La base puede rechazar el borrado si hay animales vinculados al potrero.
 export const deletePotrero = async (req, res) => {
   try {
     await pool.query('DELETE FROM potrero WHERE id = ?', [req.params.id]);
